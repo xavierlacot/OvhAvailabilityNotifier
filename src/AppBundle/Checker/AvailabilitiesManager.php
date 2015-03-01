@@ -46,7 +46,14 @@ class AvailabilitiesManager
     {
         $date = date('Y-m-d-H-i-s');
         $filename = $this->getHistoryFilePath($references, $locations);
-        $diffText = "\n";
+        $diffText = '';
+
+        if ((count($diff['added']) + count($diff['removed'])) === 0) {
+            $diffText .= sprintf(
+                "%s - no change\n",
+                $date
+            );
+        }
 
         foreach ($diff['added'] as $added) {
             $diffText .= sprintf(
