@@ -7,7 +7,7 @@ use AppBundle\Notifier\Notifier;
 
 class OvhChecker
 {
-    const DEFAULT_LOCATIONS = array(
+    protected static $defaultLocations = array(
         'bhs',
         'gra',
         'rbx',
@@ -29,9 +29,9 @@ class OvhChecker
     {
         $availabilites = $this->getAvailabilities($references, $locations);
         $diff = $this->computeDiff($references, $locations, $availabilites);
+        $this->availaibilitiesManager->logDiff($references, $locations, $diff);
 
         if (count($diff['added']) + count($diff['removed']) > 0) {
-            $this->availaibilitiesManager->logDiff($references, $locations, $diff);
             $this->notifier->notify($diff);
             $this->availaibilitiesManager->setCurrent($references, $locations, $availabilites);
         }
@@ -67,7 +67,7 @@ class OvhChecker
     protected function getAvailabilities(array $references, array $locations)
     {
         if (count($locations) == 0) {
-            $locations = self::DEFAULT_LOCATIONS;
+            $locations = self::$defaultLocations;
         }
 
         $return = array();
