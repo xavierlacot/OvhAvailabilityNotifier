@@ -1,0 +1,56 @@
+parameters:
+    app.ovh.checker.class: AppBundle\Checker\OvhChecker
+    app.ovh.client.class: AppBundle\Checker\Client
+    app.ovh.availability.manager.class: AppBundle\Checker\AvailabilitiesManager
+    app.ovh.notifier.class: AppBundle\Notifier\Notifier
+    app.ovh.notifier.mail.class: AppBundle\Notifier\MailNotifier
+    app.ovh.notifier.slack.class: AppBundle\Notifier\SlackNotifier
+    app.ovh.notification.storage.class: AppBundle\Notifier\NotificationStorage
+
+    app.ovh.availability.manager.workspace: %workspace%
+    app.ovh.notifier.mail_recipients: %mail_recipients%
+    app.ovh.notifier.slack_recipients: %slack_recipients%
+    app.ovh.notification.storage.filename: %notification_filename%
+
+services:
+    app.ovh.checker:
+        class: %app.ovh.checker.class%
+        arguments:
+            - @app.ovh.client
+            - @app.ovh.availability.manager
+            - @app.ovh.notifier
+
+    app.ovh.client:
+        class: %app.ovh.client.class%
+
+    app.ovh.availability.manager:
+        class: %app.ovh.availability.manager.class%
+        arguments:
+            - %app.ovh.availability.manager.workspace%
+
+    app.ovh.notifier:
+        class: %app.ovh.notifier.class%
+
+    app.ovh.notifier.mail:
+        class: %app.ovh.notifier.mail.class%
+        arguments:
+            - @templating
+            - @hip_mandrill.dispatcher
+            - @app.ovh.notification.storage
+            - %app.ovh.notifier.mail_recipients%
+        tags:
+            - { name: ovh.notifier }
+
+    app.ovh.notifier.slack:
+        class: %app.ovh.notifier.slack.class%
+        arguments:
+            - @cl_slack.api_client
+            - @app.ovh.notification.storage
+            - %app.ovh.notifier.slack_recipients%
+        tags:
+            - { name: ovh.notifier }
+
+    app.ovh.notification.storage:
+        class: %app.ovh.notification.storage.class%
+        arguments:
+            - %app.ovh.notification.storage.filename%
