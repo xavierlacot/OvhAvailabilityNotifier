@@ -9,6 +9,10 @@ use Symfony\Component\Console\Input\ArrayInput;
 
 class ServerAvailabilityCommand extends ContainerAwareCommand
 {
+    protected $checkEvery = 10;
+    protected $iteration = 0;
+    protected $startAt;
+
     protected function configure()
     {
         $this
@@ -17,6 +21,25 @@ class ServerAvailabilityCommand extends ContainerAwareCommand
             ->addArgument('reference', InputArgument::REQUIRED, 'Which server reference do you want to check?')
             ->addArgument('location', InputArgument::OPTIONAL, 'Which datacenter do you want to check?')
         ;
+    }
+
+    protected function conditionnalSleep()
+    {
+        $now = time();
+        var_dump($now);
+
+        if ($now - $this->startAt >= 61 - $this->checkEvery) {
+            return false;
+        }
+
+        $waitTime = $this->iteration * $this->checkEvery + $this->startAt - $now;
+
+        if ($waitTime > 0) {
+            sleep($waitTime);
+        }
+
+        $this->iteration++;
+        return true;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -43,7 +66,12 @@ class ServerAvailabilityCommand extends ContainerAwareCommand
         }
 
         $checker = $this->getApplication()->getKernel()->getContainer()->get('app.ovh.checker');
-        $checker->check($references, $locations);
+
+        $this->startAt = time();
+
+        while ($this->conditionnalSleep()) {
+            $checker->check($references, $locations);
+        }
 
         $output->writeln('Task completed');
     }
